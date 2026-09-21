@@ -1,0 +1,12 @@
+# Secrets — never commit
+git.env
+*_probe_repo.py
+tags.txt
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+*~
+*.swp
+.vscode/
