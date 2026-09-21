@@ -1,6 +1,0 @@
-404.html :: 'pan></div></main><script src="site.js"></script></body></htm'
-about.html :: 'l></div></footer><script src="site.js"></script></body></htm'
-agent-c.html :: 'NO site.js ref'
-careers.html :: 'l></div></footer><script src="site.js"></script></body></htm'
-index.html :: 'l></div></footer><script src="site.js"></script></body></htm'
-mission-control.html :: 'l></div></footer><script src="site.js"></script></body></htm'
