@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+# TODO: replace with the absolute production URL when the domain is final,
+# e.g. Sitemap: https://tara.thapar.edu/sitemap.xml
+Sitemap: sitemap.xml
