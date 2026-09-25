@@ -25,6 +25,7 @@
     initToTop();
     initMagnetic();
     initCursor();
+    initCopyEmail();
   });
 
   /* ---------------- Base ---------------- */
@@ -282,6 +283,42 @@
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
+  }
+
+  /* ----- Copy-email fallback (for devices with no mail app set) ----- */
+  function initCopyEmail() {
+    var btns = document.querySelectorAll("[data-copy-email]");
+    if (!btns.length) return;
+    btns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var addr = btn.getAttribute("data-copy-email") || "";
+        var done = function () {
+          var scope = btn.closest(".split") || btn.parentElement;
+          var msg = scope ? scope.querySelector(".sponsor-message") : null;
+          if (msg) {
+            msg.textContent = "Email copied: " + addr + " — paste it into your mail app to pledge.";
+            msg.style.display = "block";
+          } else {
+            btn.textContent = "Copied!";
+            setTimeout(function () { btn.textContent = "Copy email"; }, 2000);
+          }
+        };
+        var fallback = function () {
+          var ta = document.createElement("textarea");
+          ta.value = addr;
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand("copy"); } catch (e) {}
+          if (ta.parentNode) ta.parentNode.removeChild(ta);
+          done();
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(addr).then(done, fallback);
+        } else {
+          fallback();
+        }
+      });
+    });
   }
 
   /* ----- Back to top ----- */
