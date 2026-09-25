@@ -420,6 +420,7 @@ html { scrollbar-color: #2a323c var(--bg); }
   .form-grid { grid-template-columns: 1fr; }
   .ticker-track { flex-wrap: wrap; gap: 10px 20px; justify-content: flex-start; }
   .about-hero-caption .container { gap: 12px; }
+  #rocket-flight { display: none; }
   .card, .dept-card { padding: 22px; }
   .nav-links.open { max-height: calc(100svh - var(--header-h)); overflow-y: auto; }
   .error-footer { flex-wrap: wrap; gap: 8px 16px; }
