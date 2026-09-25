@@ -12,7 +12,9 @@ No build step. Plain HTML + CSS + JS — open it or serve it statically.
 | `index.html` | Overview | Hero, spec strip, stats, pinned scrolly rocket flight, why-TARA, departments, CTA |
 | `about.html` | About | Story, culture principles, TARA effect timeline, leadership (HOD grid) |
 | `mission-control.html` | Mission control | Programme readiness board, constraints, phase timeline, operating principles |
+| `rockets.html` | Our Rockets | Icarus vehicle card, road-to-launch board, print-to-flight timeline, sponsor/join CTA |
 | `careers.html` | Join TARA | Six departments, open HOD roles, FAQ, application form (submits via `mailto:` to both team leads) |
+| `sponsorships.html` | Sponsors | Three sponsorship tiers, why-sponsor-us, founding-partner note, Dodo Payments coming-soon checkout |
 | `404.html` | 404 | Signal-lost error page |
 | `agent-c.html` | — | Meta-refresh redirect to `index.html` (crawler/legacy alias) |
 
@@ -56,6 +58,14 @@ Then open http://localhost:8000 (or :3000 for `serve`).
 - **Readiness / phases** — `mission-control.html` (`.mission-board`, `.timeline`).
 - **Cache busting** — stylesheet and script are pinned with `?v=6`.
   Bump the version in every HTML file when shipping CSS/JS changes.
+- **Sponsorships** — `index.html`, `#sponsorships` (coming-soon panel) and the full
+  `sponsorships.html` page (`#tiers`, `#why`, `#checkout`). Checkout is via
+  Dodo Payments payment links (no-code, fastest for a static site): create a one-time
+  product in the [Dodo dashboard](https://app.dodopayments.com), copy the payment link
+  (`https://checkout.dodopayments.com/...`), and paste it as the `href` of
+  `[data-sponsor-checkout]`. Until a real link is set, the button shows a coming-soon
+  note instead of navigating. For an on-page overlay instead, install
+  `dodopayments-checkout` and call `DodoPayments.Checkout.open({ checkoutUrl })`.
 - **Images** — covers are pre-sized (640px) with WebP + JPEG twins; the hero
   has a WebP twin via CSS `image-set`. HOD photos lazy-load with explicit
   dimensions. Keep new source photos under ~200 KB.
@@ -70,4 +80,4 @@ Then open http://localhost:8000 (or :3000 for `serve`).
 ## Contact
 
 TIET Aerospace & Rocketry Association — Patiala, Punjab, India.
-`tara@thapar.edu`
+`smukherjee_be26@thapar.edu`

@@ -5,6 +5,8 @@
 (function () {
   "use strict";
 
+  document.documentElement.classList.add("js");
+
   var RM = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var FINE = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
   var clamp01 = function (v) { return Math.max(0, Math.min(1, v)); };
@@ -13,6 +15,7 @@
   document.addEventListener("DOMContentLoaded", function () {
     initLoader();
     initNav();
+    initSponsorCheckout();
     initReveal();
     initCounters();
     initForm();
@@ -21,22 +24,57 @@
     initScrollSpy();
     initToTop();
     initMagnetic();
+    initCursor();
   });
 
   /* ---------------- Base ---------------- */
 
   function initLoader() {
     var loader = document.querySelector(".page-loader");
-    if (!loader) return;
+    if (!loader) {
+      document.body.classList.add("is-ready");
+      return;
+    }
     var done = false;
     var dismiss = function () {
       if (done) return;
       done = true;
       loader.classList.add("is-loaded");
-      document.body.classList.add("is-ready"); // hero entrance choreography
+      loader.setAttribute("aria-hidden", "true");
+      document.body.classList.add("is-ready"); // hero entrance choreography + scroll unlock
+      setTimeout(function () {
+        if (loader.parentNode) loader.parentNode.removeChild(loader);
+      }, 500);
     };
-    window.addEventListener("load", function () { setTimeout(dismiss, 350); }, { once: true });
-    setTimeout(dismiss, 2200);
+    if (document.readyState === "complete") {
+      setTimeout(dismiss, 350);
+    } else {
+      window.addEventListener("load", function () { setTimeout(dismiss, 350); }, { once: true });
+      setTimeout(dismiss, 2200);
+    }
+  }
+
+  /* ----- Sponsorships: Dodo Payments checkout (coming-soon guard) -----
+     The button goes live once its href is replaced with a real Dodo
+     payment link (https://checkout.dodopayments.com/...). Until then,
+     intercept the click and show the coming-soon note instead of
+     following the placeholder URL. */
+  function initSponsorCheckout() {
+    var btns = document.querySelectorAll("[data-sponsor-checkout]");
+    if (!btns.length) return;
+    btns.forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        var url = btn.getAttribute("href") || "";
+        if (url.indexOf("REPLACE-WITH-YOUR-PAYMENT-LINK") === -1) return; // live link: follow it
+        e.preventDefault();
+        var scope = btn.closest(".split") || btn.parentElement;
+        var msg = scope ? scope.querySelector(".sponsor-message") : null;
+        if (msg) {
+          msg.textContent = "Sponsorship checkout via Dodo Payments opens soon — write to us at smukherjee_be26@thapar.edu to pledge early and we'll reserve your slot.";
+          msg.style.display = "block";
+        }
+      });
+    });
   }
 
   function initNav() {
@@ -173,6 +211,79 @@
     pairs.forEach(function (p) { io.observe(p.target); });
   }
 
+  /* ----- Reticle cursor + cursor speedometer (fine pointers, motion-safe) -----
+     Both elements are injected so every page gets them with zero markup
+     edits. Skipped entirely for touch and reduced-motion users. */
+  function initCursor() {
+    if (!FINE || RM) return;
+    var cur = document.createElement("div");
+    cur.className = "reticle-cursor";
+    cur.setAttribute("aria-hidden", "true");
+    cur.innerHTML = '<span class="ret-ring"></span><span class="ret-tick t"></span><span class="ret-tick b"></span><span class="ret-tick l"></span><span class="ret-tick r"></span><span class="ret-dot"></span>';
+    document.body.appendChild(cur);
+
+    var speedo = document.createElement("div");
+    speedo.className = "cursor-speedo";
+    speedo.setAttribute("aria-hidden", "true");
+    speedo.innerHTML = '<span>VEL <b>0 M/S</b></span><span class="speedo-track"><span class="speedo-burn"></span><span class="speedo-rocket"><svg viewBox="0 0 90 210" aria-hidden="true"><path d="M45 4C24 27 19 61 19 125l26 45 26-45C71 61 66 27 45 4Z" fill="#f5f2ec" stroke="#ff8a3d" stroke-width="7"/></svg></span></span>';
+    document.body.appendChild(speedo);
+    var readNum = speedo.querySelector("b");
+    var burn = speedo.querySelector(".speedo-burn");
+    var marker = speedo.querySelector(".speedo-rocket");
+    var track = speedo.querySelector(".speedo-track");
+    var trackW = 110;
+    var measureTrack = function () { if (track) trackW = track.clientWidth || 110; };
+    measureTrack();
+    window.addEventListener("resize", measureTrack, { passive: true });
+
+    document.documentElement.classList.add("has-cursor");
+
+    var x = window.innerWidth / 2, y = window.innerHeight / 2;
+    var tx = x, ty = y, shown = false;
+    var sm = 0, lastT = 0, lastX = null, lastY = null, lastText = 0;
+
+    window.addEventListener("pointermove", function (e) {
+      if (e.pointerType && e.pointerType !== "mouse") {
+        document.documentElement.classList.remove("has-cursor"); // hybrid touch: restore native cursor
+        return;
+      }
+      document.documentElement.classList.add("has-cursor");
+      var now = performance.now();
+      tx = e.clientX; ty = e.clientY;
+      if (lastX !== null && now > lastT) {
+        var d = Math.hypot(tx - lastX, ty - lastY);
+        var v = d / Math.max(1, now - lastT) * 1000; // px/s
+        sm = lerp(sm, Math.min(4000, v), 0.35);
+      }
+      lastX = tx; lastY = ty; lastT = now;
+      if (!shown) { shown = true; cur.classList.add("on"); }
+    }, { passive: true });
+    document.documentElement.addEventListener("mouseleave", function () {
+      cur.classList.remove("on"); shown = false; lastX = null;
+    });
+
+    document.addEventListener("mouseover", function (e) {
+      var t = e.target;
+      cur.classList.toggle("hot", !!(t && t.closest && t.closest("a,button,input,select,textarea,label,summary")));
+    });
+
+    function frame(now) {
+      x = lerp(x, tx, 0.35); y = lerp(y, ty, 0.35);
+      cur.style.transform = "translate3d(" + x.toFixed(1) + "px," + y.toFixed(1) + "px,0)";
+      if (now - lastT > 90) sm = lerp(sm, 0, 0.18); // decay at rest
+      var pct = clamp01(sm / 2600);
+      cur.style.setProperty("--spread", (4 + pct * 9).toFixed(1) + "px");
+      if (burn) burn.style.transform = "scaleX(" + pct.toFixed(3) + ")";
+      if (marker) marker.style.transform = "translate(-50%,-50%) translateX(" + (pct * trackW).toFixed(1) + "px)";
+      if (now - lastText > 100) {
+        lastText = now;
+        if (readNum) readNum.textContent = Math.round(sm / 6) + " M/S";
+      }
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
   /* ----- Back to top ----- */
   function initToTop() {
     var btn = document.createElement("button");
@@ -257,7 +368,7 @@
 
     var flightParts = null;
     if (flight) flightParts = setupFlight(flight);
-    if (ticker && !RM) setupMarquee(ticker);
+    if (ticker && !RM && window.innerWidth > 720) setupMarquee(ticker);
     timelines.forEach(function (tl) { tl.classList.add("goated"); });
     tiltCards.forEach(function (c) { c.classList.add("tilt"); });
 
